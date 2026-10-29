@@ -1,0 +1,101 @@
+{
+  "name": "AI Menu Onboarding Copilot",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": "menu-upload-webhook"
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "hook",
+            "type": "hook:CustomWebHook",
+            "label": "Webhook"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "http:ActionDownload",
+      "version": 2,
+      "parameters": {},
+      "mapper": {
+        "url": "{{1.image_url}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "openai:ActionCreateChatCompletion",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "model": "gpt-4o",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Você é um especialista em digitalização de catálogos para aplicativos de delivery. Retorne um JSON com os itens do cardápio."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "image_url",
+                "image_url": {
+                  "url": "data:{{2.contentType}};base64,{{2.data}}"
+                }
+              }
+            ]
+          }
+        ],
+        "response_format": {
+          "type": "json_object"
+        }
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "googlesheets:ActionAddARow",
+      "version": 2,
+      "parameters": {},
+      "mapper": {
+        "spreadsheetId": "YOUR_SPREADSHEET_ID",
+        "sheet": "Catalog",
+        "values": {
+          "A": "{{3.choices[].message.content.restaurant_name}}",
+          "B": "{{length(3.choices[].message.content.menu_items)}}",
+          "C": "Pronto para Revisão"
+        }
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "version": 1
+  }
+}
